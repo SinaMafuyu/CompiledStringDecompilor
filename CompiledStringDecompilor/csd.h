@@ -50,6 +50,7 @@ private:
 	Var *getVar(char *name);
 	int addVar(char *name);
 	void addFormat(int num);
+	void sortVar(void);
 
 public:
 	CSD();

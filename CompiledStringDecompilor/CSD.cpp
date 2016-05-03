@@ -1,5 +1,37 @@
 #include "csd.h"
 
+void CSD::sortVar(void)
+{
+	for (int i = 0; i < vNum; i++)
+	{
+		if (vArr[i]->getEssen())
+			continue;
+		else
+		{
+			for (int j = i+1; j < vNum; j++)
+			{
+				if (vArr[j]->getEssen())
+				{
+					Var *tmp=vArr[i];
+					vArr[i] = vArr[j];
+					vArr[j] = tmp;
+
+					for(int k=0; k<formatNum; k++)
+					{
+						if (format[k] == (i | 0x0100))
+							format[k] = (j | 0x0100);
+						else if (format[k] == (j | 0x0100))
+							format[k] = (i | 0x0100);
+					}
+
+					break;
+				}
+				if (j + 1 == vNum)
+					return;
+			}
+		}
+	}
+}
 
 Var* CSD::getVar(char *name)
 {
@@ -111,12 +143,12 @@ bool CSD::loadSds(char *fileName)
 		}
 
 		if (fscanf(fp, "%d %d", &idSize, &strSize) != 2)
-			throw "No id, strSize in .cst";
+			throw "No id, strSize in .txt";
 		if (idSize < 1 || strSize < 1)
 			throw "idSize, strSize must be more than 0";
 
 		if(fgetc(fp) != 0x0a)
-			throw "No id, strSize in .cst";
+			throw "No id, strSize in .txt";
 
 		int a, b;
 
@@ -284,6 +316,7 @@ bool CSD::loadSds(char *fileName)
 	catch (...) {}
 
 	fclose(fp);
+	sortVar();
 	return true;
 }
 
@@ -339,11 +372,11 @@ void CSD::showSds()
 
 bool CSD::decompile(char * src, char *dst)
 {
-	FILE *dat, *cst;
+	FILE *dat, *txt;
 
 	char sel;
 
-	cout << endl << ">> WARNING: this is DECOMPILE mode. this will destroy your work data if .cst file Exists.<<" << endl << endl << "Do you want to continue? (y/n) :";
+	cout << endl << ">> WARNING: this is DECOMPILE mode. this will destroy your work data if .txt file Exists.<<" << endl << endl << "Do you want to continue? (y/n) :";
 
 	cin >> sel;
 
@@ -359,10 +392,10 @@ bool CSD::decompile(char * src, char *dst)
 		if (!dat)
 			throw "No .dat file";
 
-		cst = fopen(dst, "wb+");
+		txt = fopen(dst, "wb+");
 
-		if (!cst)
-			throw "Cannot create .cst file";
+		if (!txt)
+			throw "Cannot create .txt file";
 
 		if (formatNum==0)
 			throw "Invaild sds file loaded";
@@ -375,15 +408,15 @@ bool CSD::decompile(char * src, char *dst)
 
 
 		fclose(dat);
-		fclose(cst);
+		fclose(txt);
 	}
 	catch (char *s)
 	{
 		cout << "[ERR] " << s << endl;
 		if (dat)
 			fclose(dat);
-		if (cst)
-			fclose(cst);
+		if (txt)
+			fclose(txt);
 		return false;
 	}
 	catch (...)
@@ -398,7 +431,7 @@ bool CSD::decompile(char * src, char *dst)
 
 bool CSD::compile(char * src, char *dst)
 {
-	FILE *dat=NULL, *cst = NULL;
+	FILE *dat=NULL, *txt = NULL;
 	int *v=NULL, tmp;
 	char sel;
 	char *id = NULL, *str = NULL;
@@ -414,10 +447,10 @@ bool CSD::compile(char * src, char *dst)
 	}
 
 	try {
-		cst = fopen(src, "rb");
+		txt = fopen(src, "rb");
 
-		if (!cst)
-			throw "No .cst file";
+		if (!txt)
+			throw "No .txt file";
 
 		dat = fopen(dst, "wb+");
 
@@ -434,19 +467,19 @@ bool CSD::compile(char * src, char *dst)
 
 		v = new int[vNum]();
 		
-		for (; !feof(cst);)
+		for (; !feof(txt);)
 		{
 			//cout << "v: ";
 			for (int i = 0; i < vNum; i++)
 			{
-				if (fscanf(cst, "%d ", &v[i]) <= 0)
-					throw "Invaild cst file";
+				if (fscanf(txt, "%d ", &v[i]) <= 0)
+					throw "Invaild txt file";
 			//	cout << "[" << i << "]" << v[i];
 			}
 
 			for (int i = 0; i <= idSize; i++)
 			{
-				id[i] = fgetc(cst);
+				id[i] = fgetc(txt);
 				if (i == idSize)
 					throw "No enough idSize";
 				if (id[i] == 0x0a)
@@ -456,30 +489,30 @@ bool CSD::compile(char * src, char *dst)
 				}
 			}
 
-			for (int i = 0; !feof(cst); i++)
+			for (int i = 0; !feof(txt); i++)
 			{
-				str[i] = fgetc(cst);
+				str[i] = fgetc(txt);
 				if (i >= strSize)
 					throw "No enough strSize";
 				if (str[i] == 0x0a)
 				{
-					if (fgetc(cst) == 0x0a)
+					if (fgetc(txt) == 0x0a)
 					{
-						tmp = fgetc(cst);
-						if (feof(cst))
+						tmp = fgetc(txt);
+						if (feof(txt))
 						{
 							str[i] = 0;
 							break;
 						}
 						if (tmp >= '0' && tmp <= '9')
 						{
-							fseek(cst, -1, SEEK_CUR);
+							fseek(txt, -1, SEEK_CUR);
 							str[i] = 0;
 							break;
 						}
-						fseek(cst, -1, SEEK_CUR);
+						fseek(txt, -1, SEEK_CUR);
 					}
-					fseek(cst, -1, SEEK_CUR);
+					fseek(txt, -1, SEEK_CUR);
 				}
 			}
 			
@@ -558,15 +591,15 @@ bool CSD::compile(char * src, char *dst)
 		delete str;
 		delete v;
 		fclose(dat);
-		fclose(cst);
+		fclose(txt);
 	}
 	catch (char *s)
 	{
 		cout << "[ERR] " << s << endl;
 		if (dat)
 			fclose(dat);
-		if (cst)
-			fclose(cst);
+		if (txt)
+			fclose(txt);
 		if (v)
 			delete v;
 		if (id)

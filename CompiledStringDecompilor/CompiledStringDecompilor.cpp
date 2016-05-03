@@ -16,13 +16,13 @@ int main(int argc, char* argv[])
 	{
 		CSD csd;
 		if (csd.loadSds(argv[2]))
-			csd.compile(argv[3], argv[4]);
+			csd.compile(argv[4], argv[3]);
 	}
 	else
 	{
-		cout << "Usage: csd [mode] \".sds\" \".dat\" \".cst\"" << endl;
-		cout << "\tmode:\tcompile \t- .cst to dat" << endl;
-		cout << "\t\tdecompile \t- .dat to .cst" << endl;
+		cout << "Usage: csd [mode] \".sds\" \".dat\" \".txt\"" << endl;
+		cout << "\tmode:\tcompile \t- .txt to dat" << endl;
+		cout << "\t\tdecompile \t- .dat to .txt" << endl;
 	}
 	return 0;
 }
