@@ -21,7 +21,7 @@ by adding $, can set ST dependence (if there is no ST, ST-Dependence will not ap
 
   #c $                          - ST dependence<br/>
   #a ~ 0                        - a is not essential, default is 0<br/>
-  #a >= 3                       - you should set option when Var is not essential<br/>
+  #a >= 3                       - you should set some option when Var is not essential (in this case: a >= 3 )<br/>
   #a != 0A                      - a nequl 0x0A<br/>
   #c < 20                       - c < 0x20<br/>
   #c ~ 20                       - ST dependence is not means non-essential<br/>
