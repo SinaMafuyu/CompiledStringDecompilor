@@ -705,6 +705,15 @@ bool CSD::decompile(char * src, char *dst)
 			isStr = 1;
 			id[0] = 0;
 			str[0] = 0;
+			fgetc(dat);
+			if (feof(dat))
+			{
+				return true;
+			}
+			else
+			{
+				fseek(dat, -1, SEEK_CUR);
+			}
 			for (int i = 0; i < vNum; i++)
 			{
 				v[i] = vArr[i]->getDef();
