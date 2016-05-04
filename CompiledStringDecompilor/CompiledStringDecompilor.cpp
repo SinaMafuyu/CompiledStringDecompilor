@@ -11,6 +11,9 @@ int main(int argc, char* argv[])
 	else if (argc == 5 && !strcmp(argv[1],"decompile"))
 	{
 
+		CSD csd;
+		if (csd.loadSds(argv[2]))
+			csd.decompile(argv[3], argv[4]);
 	}
 	else if (argc == 5 && !strcmp(argv[1], "compile"))
 	{

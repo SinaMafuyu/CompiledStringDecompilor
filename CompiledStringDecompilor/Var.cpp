@@ -11,6 +11,7 @@ Var::Var(char *name) {
 	biggerthen = 0;
 	equal = NULL;
 	isStrDep = false;
+	isSetted = false;
 }
 Var::~Var() {
 	delete name;
@@ -32,6 +33,10 @@ bool Var::getEssen(void) {
 	return this->isEssen;
 }
 
+bool Var::getSet(void) {
+	return this->isSetted;
+}
+
 void Var::setStrDep(bool isStrDep) {
 	this->isStrDep = isStrDep;
 }
@@ -46,10 +51,12 @@ int Var::getDef(void) {
 
 void Var::setLessthen(int lessthen) {
 	this->lessthen = lessthen;
+	isSetted = true;
 }
 
 void Var::setBiggerthen(int biggerthen) {
 	this->biggerthen = biggerthen;
+	isSetted = true;
 }
 
 void Var::addEqual(int num) // add num to equalList
@@ -69,6 +76,7 @@ void Var::addEqual(int num) // add num to equalList
 	}
 	equal[equalNum] = num;
 	++equalNum;
+	isSetted = true;
 }
 
 void Var::addNequal(int num) // add num to NequalList
@@ -88,6 +96,7 @@ void Var::addNequal(int num) // add num to NequalList
 	}
 	nEqual[nEqualNum] = num;
 	++nEqualNum;
+	isSetted = true;
 }
 
 bool Var::isVaild(int num) // Is num can get in this variable?

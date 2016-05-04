@@ -20,6 +20,7 @@ private:
 	int nEqualNum;	// Not Equal number of
 	int lessthen;
 	int biggerthen;
+	bool isSetted;	// if Condition has setted
 
 public:
 	Var(char *name);
@@ -35,6 +36,7 @@ public:
 	void addEqual(int num); // add num to equalList
 	void addNequal(int num); // add num to NequalList
 	bool isVaild(int num); // Is num can get in this variable?
+	bool getSet(void);
 };
 
 class CSD {
@@ -46,11 +48,18 @@ private:
 	int vSize;		// total size
 	int vNum;		// number of elements
 	int idSize, strSize;	//for de/compile
+	int loop;
 
 	Var *getVar(char *name);
 	int addVar(char *name);
 	void addFormat(int num);
 	void sortVar(void);
+	int nextEssen(int i);
+	int nextEssenI(int i);
+	bool isNextLine(FILE *fp);
+	bool isPatternMatch(FILE *fp, int i);
+	int nextHex(int i);
+	int nextHexI(int i);
 
 public:
 	CSD();
