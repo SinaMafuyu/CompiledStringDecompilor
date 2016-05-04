@@ -20,8 +20,8 @@ by adding $, can set ST dependence (if there is no ST, ST-Dependence will not ap
   0A #a ID $12 #c ST 14         - #: Var, $: ST dependence HEX, ST: String, ID: id<br/><br/>
 
   #c $                          - ST dependence<br/>
-  #a ~ 0                        - a is not essential, default is 0<br/>
-  #a >= 3                       - you should set some option when Var is not essential (in this case: a >= 3 )<br/>
+  #a ~ 0                        - a is not essential, default is 0x00<br/>
+  #a >= 3                       - you should set some option when Var is not essential (in this case: a >= 0x03 )<br/>
   #a != 0A                      - a nequl 0x0A<br/>
   #c < 20                       - c < 0x20<br/>
-  #c ~ 20                       - ST dependence is not means non-essential<br/>
+  #c ~ 20                       - ST dependence is not means non-essential, c's default is 0x20<br/>
