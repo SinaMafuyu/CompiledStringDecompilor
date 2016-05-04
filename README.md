@@ -1,10 +1,8 @@
 # CompiledStringDecompilor
 Similler function with https://github.com/SinaMafuyu/String_Client_Compiler <br/>
-helps decompile compiled String file. <br/><br/>
-
+helps decompile compiled String file. <br/>
 CSD Supports Scripts (.sds file)<br/><br/>
-
-Main fuction is read data by format in .sds file.<br/><br/>
+Main fuction: read data by format in .sds file.<br/><br/>
 
 # .sds Scripts
 supports comment before sds version string<br/>
