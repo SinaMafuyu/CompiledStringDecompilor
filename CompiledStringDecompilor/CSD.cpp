@@ -47,9 +47,10 @@ bool CSD::isNextLine(FILE *fp)
 			else
 			{
 				//cout << loop << endl;
-				if (i != 0 && i == loop)
+				if (loop != 0 && i == loop)
 				{
-					fseek(fp, -1, SEEK_CUR);
+					fpos_t ps;
+					fgetpos(fp, &ps);
 					if (isNextLine(fp))
 					{
 						fsetpos(fp, &pos);
@@ -57,7 +58,7 @@ bool CSD::isNextLine(FILE *fp)
 					}
 					else
 					{
-						fseek(fp, 1, SEEK_CUR);
+						fsetpos(fp, &ps);
 					}
 				}
 				continue;
@@ -94,7 +95,7 @@ bool CSD::isNextLine(FILE *fp)
 					fseek(fp, -1, SEEK_CUR);
 					continue;
 				}
-				else if ((format[i + 1] & 0xff00) == 0x0200 && tmp == format[i + 1])	// Next is SD-Hex
+				else if ((format[i + 1] & 0xff00) == 0x0200 && tmp == (format[i + 1] & 0xff))	// Next is SD-Hex
 				{
 					fseek(fp, -1, SEEK_CUR);
 					continue;
@@ -345,6 +346,7 @@ CSD::CSD() {
 	vSize = 0;
 	vNum = 0;
 	loop = 0;
+	lastEssen = 0x8fff;
 };
 
 CSD::~CSD() {
@@ -585,7 +587,15 @@ bool CSD::loadSds(char *fileName)
 					break;
 				}
 			}
+			break;
 		}
+	}
+	for (int i = 0; i < formatNum; i++)
+	{
+		if ((format[i] & 0xff00) == 0)
+			lastEssen = i;
+		else if ((format[i] & 0xff00) == 0x0100 && vArr[format[i] & 0xff]->getEssen())
+			lastEssen = i;
 	}
 	return true;
 }
@@ -701,7 +711,7 @@ bool CSD::decompile(char * src, char *dst)
 			}
 			for (int j = 0; j < formatNum; j++)
 			{
-				if (j != 0 && isNextLine(dat))
+				if (j > lastEssen && isNextLine(dat))
 				{
 					break;
 				}
@@ -864,10 +874,12 @@ bool CSD::decompile(char * src, char *dst)
 					}
 					else
 					{
-						//printf(" %x\n", tmp);
-						//printf(" %x\n", fgetc(dat));
-						//printf(" %x\n", fgetc(dat));
-						//printf(" %x\n", fgetc(dat));
+						printf(" loop = %d\n", loop);
+						printf("in sds: %x ", format[j]);
+						printf("in dat: %x\nnext:\n", tmp);
+						printf(" %x\n", fgetc(dat));
+						printf(" %x\n", fgetc(dat));
+						printf(" %x\n", fgetc(dat));
 						throw "Error reading Hex";
 					}
 				}

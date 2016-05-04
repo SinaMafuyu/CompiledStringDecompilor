@@ -49,6 +49,7 @@ private:
 	int vNum;		// number of elements
 	int idSize, strSize;	//for de/compile
 	int loop;
+	int lastEssen;
 
 	Var *getVar(char *name);
 	int addVar(char *name);
