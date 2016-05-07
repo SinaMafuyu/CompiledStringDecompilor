@@ -657,6 +657,7 @@ bool CSD::decompile(char * src, char *dst, bool tmplt)
 	char sel;
 	char *id = NULL, *str = NULL;
 	int isStr;
+	int first=0;
 
 	if (tmplt) {
 		cout << endl << ">> WARNING: this is template creation mode. this will destroy your work data if .txt file Exists.<<" << endl << endl << "Do you want to continue? (y/n) :";
@@ -908,8 +909,18 @@ bool CSD::decompile(char * src, char *dst, bool tmplt)
 				fprintf(txt, "%s", str);
 			}
 			else{
-				fprintf(txt, "<이 곳에 한글 번역을 작성하시면 됩니다.>");
 
+				if (first==0){
+					fprintf(txt, "<before edit this file, please change the encoding to your language. put your translation here>");
+					first = 1;
+				}
+				else if (first == 1) {
+					fprintf(txt, "<KR: 한글로 번역시에는 인코딩을 Windows 949로 바꿔주세요. put your translation here>");
+					first = 2;
+				}
+				else {
+					fprintf(txt, "<put your translation here.>");
+				}
 			}
 			fprintf(txt, "\n\n");
 		}
