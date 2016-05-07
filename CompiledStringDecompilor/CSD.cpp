@@ -650,7 +650,7 @@ void CSD::showSds()
 	}
 }
 
-bool CSD::decompile(char * src, char *dst)
+bool CSD::decompile(char * src, char *dst, bool tmplt)
 {
 	FILE *dat = NULL, *txt = NULL;
 	int *v = NULL, tmp;
@@ -658,7 +658,13 @@ bool CSD::decompile(char * src, char *dst)
 	char *id = NULL, *str = NULL;
 	int isStr;
 
-	cout << endl << ">> WARNING: this is DECOMPILE mode. this will destroy your work data if .txt file Exists.<<" << endl << endl << "Do you want to continue? (y/n) :";
+	if (tmplt) {
+		cout << endl << ">> WARNING: this is template creation mode. this will destroy your work data if .txt file Exists.<<" << endl << endl << "Do you want to continue? (y/n) :";
+	}
+	else
+	{
+		cout << endl << ">> WARNING: this is DECOMPILE mode. this will destroy your work data if .txt file Exists.<<" << endl << endl << "Do you want to continue? (y/n) :";
+	}
 
 	cin >> sel;
 
@@ -897,7 +903,11 @@ bool CSD::decompile(char * src, char *dst)
 			{
 				fprintf(txt, "%d ", v[i]);
 			}
-			fprintf(txt, "%s\n%s\n\n", id, str);
+			fprintf(txt, "%s\n", id);
+			if (!tmplt) {
+				fprintf(txt, "%s", str);
+			}
+			fprintf(txt, "\n\n");
 		}
 
 
@@ -929,7 +939,13 @@ bool CSD::decompile(char * src, char *dst)
 	catch (...)
 	{
 	}
-	cout << endl << "decompile finished." << endl;
+	if (!tmplt)
+	{
+		cout << endl << "decompile finished." << endl;
+	}
+	else {
+		cout << endl << "template creation complete." << endl;
+	}
 	cout << endl << "<!--Important--!>" << endl;
 	cout << "You should edit string in same byte (this is multibyte char data)" << endl;
 	cout << "You shouldn't edit binary number data in file (it will corrupt data.jmp)" << endl;

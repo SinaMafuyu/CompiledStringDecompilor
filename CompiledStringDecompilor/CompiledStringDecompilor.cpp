@@ -10,22 +10,30 @@ int main(int argc, char* argv[])
 	}
 	else if (argc == 5 && !strcmp(argv[1],"decompile"))
 	{
-
 		CSD csd;
 		if (csd.loadSds(argv[2]))
-			csd.decompile(argv[3], argv[4]);
+		{
+			if (!strcmp(argv[1], "template")) {
+				csd.decompile(argv[3], argv[4], true);
+			}
+			else {
+				csd.decompile(argv[3], argv[4], false);
+			}
+		}
 	}
 	else if (argc == 5 && !strcmp(argv[1], "compile"))
 	{
 		CSD csd;
-		if (csd.loadSds(argv[2]))
+		if (csd.loadSds(argv[2])) {
 			csd.compile(argv[4], argv[3]);
+		}
 	}
 	else
 	{
 		cout << "Usage: csd [mode] \".sds\" \".dat\" \".txt\"" << endl;
 		cout << "\tmode:\tcompile \t- .txt to dat" << endl;
 		cout << "\t\tdecompile \t- .dat to .txt" << endl;
+		cout << "\t\ttemplate \t- .dat to .txt, without str data" << endl;
 	}
 	return 0;
 }

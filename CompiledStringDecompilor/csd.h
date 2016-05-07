@@ -66,7 +66,7 @@ public:
 	CSD();
 	~CSD();
 	bool loadSds(char *fileName);
-	bool decompile(char * src, char *dst);
+	bool decompile(char * src, char * dst, bool tmplt);
 	bool compile(char * src, char *dst);
 	void CSD::showSds();
 };
