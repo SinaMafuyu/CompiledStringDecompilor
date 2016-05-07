@@ -51,6 +51,7 @@ bool CSD::isNextLine(FILE *fp)
 				{
 					fpos_t ps;
 					fgetpos(fp, &ps);
+					fseek(fp, -1, SEEK_CUR);
 					if (isNextLine(fp))
 					{
 						fsetpos(fp, &pos);
