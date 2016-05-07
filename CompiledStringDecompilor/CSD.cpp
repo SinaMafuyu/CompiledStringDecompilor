@@ -907,6 +907,10 @@ bool CSD::decompile(char * src, char *dst, bool tmplt)
 			if (!tmplt) {
 				fprintf(txt, "%s", str);
 			}
+			else{
+				fprintf(txt, "<이 곳에 한글 번역을 작성하시면 됩니다.>");
+
+			}
 			fprintf(txt, "\n\n");
 		}
 
