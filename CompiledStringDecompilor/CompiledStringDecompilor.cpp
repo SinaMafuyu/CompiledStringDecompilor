@@ -8,7 +8,7 @@ int main(int argc, char* argv[])
 		csd.loadSds(argv[1]);
 		csd.showSds();
 	}
-	else if (argc == 5 && !strcmp(argv[1],"decompile"))
+	else if (argc == 5 && (!strcmp(argv[1],"decompile") || !strcmp(argv[1], "template")))
 	{
 		CSD csd;
 		if (csd.loadSds(argv[2]))
