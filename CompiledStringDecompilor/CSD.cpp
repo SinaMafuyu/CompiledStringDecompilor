@@ -1,65 +1,38 @@
 #include "csd.h"
 
-bool CSD::isPatternMatch(FILE *fp, int i)
-{
-	if ((format[i] & 0xff00) == 0x0100)			// Var
-	{
-
-
-	}
-	else if ((format[i] & 0xff00) == 0x0400)	// ID
-	{
-	}
-	else if ((format[i] & 0xff00) == 0x0800)	// ST
-	{
-	}
-	else if ((format[i] & 0xff00) == 0x0200)	// String Dependence Hex
-	{
-
-	}
-	else										// Hex
-	{
-	}
-}
-
 bool CSD::isNextLine(FILE *fp)
 {
-	fpos_t pos;
-	fgetpos(fp, &pos);
-	fgetc(fp);
-	if (feof(fp))
-	{
+	int t = 0, i,j=0;
+	int tmp;
+	int vn;
+
+	t=fgetc(fp);
+	if (feof(fp) || t==EOF){
 		return true;
 	}
-	else
-	{
+	else{
 		fseek(fp, -1, SEEK_CUR);
 	}
-	for (int i = 0; i < 4 && i < formatNum; i++)
+
+	for (i = 0; i < 4 && i < formatNum && !feof(fp); i++)
 	{
-		if ((format[i] & 0xff00) == 0)
-		{
-			if (fgetc(fp) != format[i])
-			{
-				fsetpos(fp, &pos);
+		if ((format[i] & 0xff00) == 0){
+			t = fgetc(fp);
+			if (t != format[i]){
+				fseek(fp, -1 * i + j - 1, SEEK_CUR);
 				return false;
 			}
-			else
-			{
+			else{
 				//cout << loop << endl;
 				if (loop != 0 && i == loop)
 				{
-					fpos_t ps;
-					fgetpos(fp, &ps);
 					fseek(fp, -1, SEEK_CUR);
-					if (isNextLine(fp))
-					{
-						fsetpos(fp, &pos);
+					if (isNextLine(fp)){
+						fseek(fp, -1 * i + j, SEEK_CUR);
 						return false;
 					}
-					else
-					{
-						fsetpos(fp, &ps);
+					else{
+						fseek(fp, 1, SEEK_CUR);
 					}
 				}
 				continue;
@@ -67,25 +40,22 @@ bool CSD::isNextLine(FILE *fp)
 		}
 		else if ((format[i] & 0xff00) == 0x0100)			// Var
 		{
-			int vn = format[i] & 0xff;
+			vn = format[i] & 0xff;
 			if (vArr[vn]->getEssen())
 			{
-				if (vArr[vn]->isVaild(fgetc(fp)))
-				{
+				t = fgetc(fp);
+				if (vArr[vn]->isVaild(t)){
 					continue;
 				}
-				else
-				{
-					fsetpos(fp, &pos);
+				else{
+					fseek(fp, -1 * i + j - 1, SEEK_CUR);
 					return false;
 				}
 			}
 			else
 			{
-				int tmp;
-				if (i + 1 == formatNum)
-				{
-					fsetpos(fp, &pos);
+				if (i + 1 == formatNum){
+					fseek(fp, -1 * i + j, SEEK_CUR);
 					return true;
 				}
 
@@ -94,18 +64,22 @@ bool CSD::isNextLine(FILE *fp)
 				if ((format[i + 1] & 0xff00) == 0 && tmp == (format[i + 1] & 0xff))
 				{
 					fseek(fp, -1, SEEK_CUR);
+					++j;
 					continue;
 				}
 				else if ((format[i + 1] & 0xff00) == 0x0200 && tmp == (format[i + 1] & 0xff))	// Next is SD-Hex
 				{
 					fseek(fp, -1, SEEK_CUR);
+					++j;
 					continue;
 				}
-				else if (vArr[vn]->isVaild(tmp))
+				else if (vArr[vn]->isVaild(tmp)) {
 					continue;
+				}
 				else
 				{
 					fseek(fp, -1, SEEK_CUR);
+					++j;
 					continue;
 				}
 			}
@@ -113,28 +87,34 @@ bool CSD::isNextLine(FILE *fp)
 		}
 		else if ((format[i] & 0xff00) == 0x0200)
 		{
-			if (fgetc(fp) == (format[i] & 0xff))
+			t = fgetc(fp);
+			if (t == (format[i] & 0xff)) {
 				continue;
-			else
+			}
+			else {
 				fseek(fp, -1, SEEK_CUR);
+				++j;
+				continue;
+			}
 		}
 		else
 		{
-			fsetpos(fp, &pos);
+			fseek(fp, -1 * i + j, SEEK_CUR);
 			return true;
 		}
 	}
-	fsetpos(fp, &pos);
+	fseek(fp, -1 * i + j, SEEK_CUR);
 	return true;
 }
 
 int CSD::nextEssen(int i)
 {
+	int vn;
 	for (int j = i+1; j < formatNum; j++)
 	{
 		if ((format[j] & 0xff00) == 0x0100)			// Var
 		{
-			int vn = (format[j] & 0xff);
+			vn = (format[j] & 0xff);
 			if (vArr[vn]->getEssen() && vArr[vn]->getStrDep() == false)
 				return format[j];
 			else if (!(vArr[vn]->getEssen()) && vArr[vn]->getStrDep() == false)
@@ -163,11 +143,12 @@ int CSD::nextEssen(int i)
 
 int CSD::nextEssenI(int i)
 {
+	int vn;
 	for (int j = i + 1; j < formatNum; j++)
 	{
 		if ((format[j] & 0xff00) == 0x0100)			// Var
 		{
-			int vn = (format[j] & 0xff);
+			vn = (format[j] & 0xff);
 			if (vArr[vn]->getEssen() && vArr[vn]->getStrDep() == false)
 				return j;
 			else if (!(vArr[vn]->getEssen()) && vArr[vn]->getStrDep() == false)
@@ -252,6 +233,7 @@ int CSD::nextHexI(int i)
 
 void CSD::sortVar(void)
 {
+	Var *tmp;
 	for (int i = 0; i < vNum; i++)
 	{
 		if (vArr[i]->getEssen())
@@ -262,7 +244,7 @@ void CSD::sortVar(void)
 			{
 				if (vArr[j]->getEssen())
 				{
-					Var *tmp=vArr[i];
+					tmp=vArr[i];
 					vArr[i] = vArr[j];
 					vArr[j] = tmp;
 
@@ -289,20 +271,23 @@ void CSD::sortVar(void)
 	}
 }
 
-Var* CSD::getVar(char *name)
+int CSD::getVar(const char *name)
 {
+	char buf[100];
 	for (int i = 0; i < vNum; i++)
 	{
-		if (!strcmp(vArr[i]->getName(), name))
+		vArr[i]->getName(buf);
+		if (!strcmp(buf, name))
 		{
-			return vArr[i];
+			return i;
 		}
 	}
-	return NULL;
+	return -1;
 }
 
-int CSD::addVar(char *name)
+int CSD::addVar(const char *name)
 {
+	Var **tmp;
 	if (vSize == 0)
 	{
 		vArr = new Var*[10];
@@ -310,7 +295,7 @@ int CSD::addVar(char *name)
 	}
 	else if (vSize == vNum)
 	{
-		Var **tmp = vArr;
+		tmp = vArr;
 		vSize += 10;
 		vArr = new Var*[vSize];
 		memcpy(vArr, tmp, sizeof(Var*) * vNum);
@@ -323,6 +308,7 @@ int CSD::addVar(char *name)
 
 void CSD::addFormat(int num)
 {
+	int* tmp;
 	if (formatSize == 0)
 	{
 		format = new int[50];
@@ -330,7 +316,7 @@ void CSD::addFormat(int num)
 	}
 	else if (formatSize == formatNum)
 	{
-		int* tmp = format;
+		tmp = format;
 		formatSize += 50;
 		format = new int[formatSize];
 		memcpy(format, tmp, sizeof(int) * formatNum);
@@ -357,10 +343,14 @@ CSD::~CSD() {
 		delete vArr;
 };
 
-bool CSD::loadSds(char *fileName)
+bool CSD::loadSds(const char *fileName)
 {
 	FILE *fp = fopen(fileName, "r");
 	char buf[100];
+	int a, b;
+	char var[30];
+	int v;
+	int tmp;
 
 	if (!fp) {
 		cout << "No .sds File Found!" << endl;
@@ -382,8 +372,8 @@ bool CSD::loadSds(char *fileName)
 			break;
 		}
 		fgets(buf, 9, fp);
-		if (strcmp(buf, "sds:v1.0"))
-			throw "Invaild sds version Info";
+		if (strcmp(buf, "sds:v1.1"))
+			throw "Invaild sds version, curr=1.1";
 
 		while (fgetc(fp) != 0x0a);
 
@@ -400,17 +390,14 @@ bool CSD::loadSds(char *fileName)
 			break;
 		}
 
-		if (fscanf(fp, "%d %d", &idSize, &strSize) != 2)
+		if (fscanf(fp, "%d %d %d %d", &idNum, &idSize, &strNum, &strSize) != 4)
 			throw "No id, strSize in .txt";
-		if (idSize < 1 || strSize < 1)
+		if (idNum<0 || strNum<0 || idSize < 1 || strSize < 1)
 			throw "idSize, strSize must be more than 0";
 
 		if(fgetc(fp) != 0x0a)
 			throw "No id, strSize in .txt";
 
-		int a, b;
-
-		char var[30];
 
 		for (; !feof(fp);)
 		{
@@ -512,21 +499,19 @@ bool CSD::loadSds(char *fileName)
 
 		for (;!feof(fp);)
 		{
-			Var *v;
 			fscanf(fp, "%[^ ]", var);
 			if (fgetc(fp) != ' ')
 				throw "Invaild sds var option";
 			a = fgetc(fp);
 			v = getVar(var);
-			if (v == NULL)
+			if (v == -1)
 				throw "No var name in format";
 
-			int tmp;
 
 			if (a == '~')
 			{
 				fscanf(fp, "%x", &tmp);
-				v->setEssen(false, tmp);
+				vArr[v]->setEssen(false, tmp);
 			}
 			else if (a == '<')
 			{
@@ -535,7 +520,7 @@ bool CSD::loadSds(char *fileName)
 				fscanf(fp, "%x", &tmp);
 				if (a != '=')
 					--tmp;
-				v->setLessthen(tmp);
+				vArr[v]->setLessthen(tmp);
 			}
 			else if (a == '>')
 			{
@@ -543,21 +528,21 @@ bool CSD::loadSds(char *fileName)
 				fscanf(fp, "%x", &tmp);
 				if (a != '=')
 					++tmp;
-				v->setBiggerthen(tmp);
+				vArr[v]->setBiggerthen(tmp);
 			}
 			else if (a == '=')
 			{
 				fscanf(fp, "%x", &tmp);
-				v->addEqual(tmp);
+				vArr[v]->addEqual(tmp);
 			}
 			else if (a == '$')
 			{
-				v->setStrDep(true);
+				vArr[v]->setStrDep(true);
 			}
 			else if (a == '!' && fgetc(fp) == '=')
 			{
 				fscanf(fp, "%x", &tmp);
-				v->addNequal(tmp);
+				vArr[v]->addNequal(tmp);
 			}
 			else
 				throw "invaild setAtt option";
@@ -603,7 +588,8 @@ bool CSD::loadSds(char *fileName)
 
 void CSD::showSds()
 {
-	for (int i = 0; i < formatNum; i++)
+	int i, j;
+	for (i = 0; i < formatNum; i++)
 	{
 		if ((format[i] & 0xff00) == 0x0400) // id
 		{
@@ -627,7 +613,7 @@ void CSD::showSds()
 		}
 	}
 	cout << endl;
-	for (int i = 0; i < vNum; i++)
+	for (i = 0; i < vNum; i++)
 	{
 		cout << "#" << i << ": " << endl;
 		cout << "name: " << vArr[i]->name << endl;
@@ -635,13 +621,13 @@ void CSD::showSds()
 		cout << "isStrDep: " << vArr[i]->isStrDep << endl;
 		cout << "def: " << vArr[i]->def << endl;
 		cout << "equal: ";
-		for (int j = 0; j < vArr[i]->equalNum; j++)
+		for (j = 0; j < vArr[i]->equalNum; j++)
 		{
 			cout << "[" << j << "]" << vArr[i]->equal[j];
 		}
 		cout << endl;
 		cout << "nEqual: ";
-		for (int j = 0; j < vArr[i]->nEqualNum; j++)
+		for (j = 0; j < vArr[i]->nEqualNum; j++)
 		{
 			cout << "[" << j << "]" << vArr[i]->nEqual[j];
 		}
@@ -651,13 +637,15 @@ void CSD::showSds()
 	}
 }
 
-bool CSD::decompile(char * src, char *dst, bool tmplt)
+bool CSD::decompile(const char * src, const char *dst, bool tmplt)
 {
 	FILE *dat = NULL, *txt = NULL;
 	int *v = NULL, tmp;
 	char sel;
-	char *id = NULL, *str = NULL;
-	int isStr;
+	char **id = NULL, **str = NULL;
+	int isStr, idS=0, strS=0;
+	int i,j;
+	int vn;
 
 	if (tmplt) {
 		cout << endl << ">> WARNING: this is template creation mode. this will destroy your work data if .txt file Exists.<<" << endl << endl << "Do you want to continue? (y/n) :";
@@ -695,10 +683,19 @@ bool CSD::decompile(char * src, char *dst, bool tmplt)
 			throw "Invaild sds file loaded";
 		}
 
-		id = new char[idSize];
-		str = new char[strSize];
-		id[0] = 0;
-		str[0] = 0;
+		if (idNum) {
+			id = new char*[idNum];
+		}
+		if (strNum){
+			str = new char*[strNum];
+		}
+
+		for (i = 0; i < idNum; i++) {
+			id[i] = new char[idSize];
+		}
+		for (i = 0; i < strNum; i++) {
+			str[i] = new char[strSize];
+		}
 
 		v = new int[vNum];
 
@@ -707,25 +704,34 @@ bool CSD::decompile(char * src, char *dst, bool tmplt)
 			v[i] = vArr[i]->getDef();
 		}
 		
+
+
+
+
 		for (; !feof(dat);)
 		{
+			idS = 0;
+			strS = 0;
 			isStr = 1;
-			id[0] = 0;
-			str[0] = 0;
+			for (i = 0; i < idNum; i++) {
+				id[i][0] = 0;
+			}
+			for (i = 0; i < strNum; i++) {
+				str[i][0] = 0;
+			}
 			fgetc(dat);
-			if (feof(dat))
-			{
+			if (feof(dat)){
 				return true;
 			}
 			else
 			{
 				fseek(dat, -1, SEEK_CUR);
 			}
-			for (int i = 0; i < vNum; i++)
+			for (i = 0; i < vNum; i++)
 			{
 				v[i] = vArr[i]->getDef();
 			}
-			for (int j = 0; j < formatNum; j++)
+			for (j = 0; j < formatNum && !feof(dat); j++)
 			{
 				if (j > lastEssen && isNextLine(dat))
 				{
@@ -733,7 +739,7 @@ bool CSD::decompile(char * src, char *dst, bool tmplt)
 				}
 				else if ((format[j] & 0xff00) == 0x0100)			// Var
 				{
-					int vn = format[j] & 0xff;
+					vn = format[j] & 0xff;
 					if (vArr[vn]->getStrDep() && !isStr)
 					{
 						continue;
@@ -791,38 +797,39 @@ bool CSD::decompile(char * src, char *dst, bool tmplt)
 				}
 				else if ((format[j] & 0xff00) == 0x0400)	// ID
 				{
-					for (int i = 0; !feof(dat); i++)
+					for (i = 0; !feof(dat); i++)
 					{
-						if (i >= idSize)
+						if (i >= idSize-1)
 						{
 							throw "ERR: Need more id string buffer";
 						}
-						if (isNextLine(dat))
+						else if (isNextLine(dat))
 						{
-							id[i] = 0;
+							++idS;
 							break;
 						}
-						id[i] = fgetc(dat);
-						if((format[j+1] & 0xff00) == 0x00 && id[i] == (format[j + 1] & 0xff)) //hex
+						id[idS][i] = fgetc(dat); 
+						if((format[j+1] & 0xff00) == 0x00 && id[idS][i] == (format[j + 1] & 0xff)) //hex
 						{
-							id[i] = 0;
 							fseek(dat, -1, SEEK_CUR);
+							++idS;
 							break;
 						}
-						else if ((format[j + 1] & 0xff00) == 0x0200 && isStr && id[i] == (format[j + 1] & 0xff)) // SD-Hex
+						else if ((format[j + 1] & 0xff00) == 0x0200 && isStr && id[idS][i] == (format[j + 1] & 0xff)) // SD-Hex
 						{
-							id[i] = 0;
 							fseek(dat, -1, SEEK_CUR);
+							++idS;
 							break;
 						}
-						else if ((format[j + 1] & 0xff00) == 0x0200 && isStr!=2 && id[i] == nextHex(j + 1)) // SD-Hex
+						else if ((format[j + 1] & 0xff00) == 0x0200 && isStr!=2 && id[idS][i] == nextHex(j + 1)) // SD-Hex
 						{
-							id[i] = 0;
 							isStr = 0;
 							fseek(dat, -1, SEEK_CUR);
+							++idS;
 							break;
 						}
 					}
+					id[idS-1][i] = 0;
 				}
 				else if ((format[j] & 0xff00) == 0x0800)	// ST
 				{
@@ -831,30 +838,31 @@ bool CSD::decompile(char * src, char *dst, bool tmplt)
 						continue;
 					}
 
-					for (int i = 0; !feof(dat); i++)
+					for (i = 0; !feof(dat); i++)
 					{
-						if (i >= strSize)
+						if (i >= strSize-1)
 							throw "ERR: Need more str string buffer";
 						if (isNextLine(dat))
 						{
-							str[i] = 0;
+							++strS;
 							break;
 						}
-						str[i] = fgetc(dat);
-						if ((format[j + 1] & 0xff00) == 0x00 && id[i] == (format[j + 1] & 0xff)) //hex
+						str[strS][i] = fgetc(dat);
+						if ((format[j + 1] & 0xff00) == 0x00 && str[strS][i] == (format[j + 1] & 0xff)) //hex
 						{
-							str[i] = 0;
 							fseek(dat, -1, SEEK_CUR);
+							++strS;
 							break;
 						}
-						else if ((format[j + 1] & 0xff00) == 0x0200 && id[i] == (format[j + 1] & 0xff)) // SD-Hex
+						else if ((format[j + 1] & 0xff00) == 0x0200 && str[strS][i] == (format[j + 1] & 0xff)) // SD-Hex
 						{
-							str[i] = 0;
 							fseek(dat, -1, SEEK_CUR);
+							++strS;
 							break;
 						}
 					}
 
+					str[strS-1][i] = 0;
 					isStr = 2;
 				}
 				else if ((format[j] & 0xff00) == 0x0200)	// String Dependence Hex
@@ -891,24 +899,43 @@ bool CSD::decompile(char * src, char *dst, bool tmplt)
 					else
 					{
 						printf(" loop = %d\n", loop);
-						printf("in sds: %x ", format[j]);
-						printf("in dat: %x\nnext:\n", tmp);
-						printf(" %x\n", fgetc(dat));
-						printf(" %x\n", fgetc(dat));
-						printf(" %x\n", fgetc(dat));
+						printf("in sds: %#x ", format[j]);
+						printf("in dat: %#x\nnext:\n", tmp);
+						printf(" %#x\n", fgetc(dat));
+						printf(" %#x\n", fgetc(dat));
+						printf(" %#x\n", fgetc(dat));
 						throw "Error reading Hex";
 					}
 				}
 			}
-			for (int i = 0; i < vNum; i++)
+			for (i = 0; i < vNum; i++)
 			{
 				fprintf(txt, "%d ", v[i]);
 			}
-			fprintf(txt, "%s\n", id);
-			if (!tmplt) {
-				fprintf(txt, "%s", str);
+			for (i = 0; i < idNum; i++)
+			{
+				fprintf(txt, "%s\n", id[i]);
 			}
-			fprintf(txt, "\n\n");
+			if (!tmplt) {
+				for (int i = 0; i < strNum; i++)
+				{
+					if (strNum > 1) {
+						fprintf(txt, "[sTr]");
+					}
+					fprintf(txt, "%s", str[i]);
+					fprintf(txt, "\n\n");
+				}
+			}
+			else
+			{
+				for (int i = 0; i < strNum; i++)
+				{
+					if (strNum > 1) {
+						fprintf(txt, "[sTr]");
+					}
+					fprintf(txt, "\n\n");
+				}
+			}
 		}
 
 
@@ -916,8 +943,12 @@ bool CSD::decompile(char * src, char *dst, bool tmplt)
 
 
 
-		delete id;
-		delete str;
+		if (idNum) {
+			delete[] id;
+		}
+		if (strNum) {
+			delete[] str;
+		}
 		delete v;
 		fclose(dat);
 		fclose(txt);
@@ -931,10 +962,10 @@ bool CSD::decompile(char * src, char *dst, bool tmplt)
 			fclose(txt);
 		if (v)
 			delete v;
-		if (id)
-			delete id;
-		if (str)
-			delete str;
+		if (id && idNum)
+			delete[]id;
+		if (str && strNum)
+			delete[]str;
 		return false;
 	}
 	catch (...)
@@ -953,12 +984,14 @@ bool CSD::decompile(char * src, char *dst, bool tmplt)
 	return true;
 }
 
-bool CSD::compile(char * src, char *dst)
+bool CSD::compile(const char * src, const char *dst)
 {
 	FILE *dat=NULL, *txt = NULL;
 	int *v=NULL, tmp;
 	char sel;
-	char *id = NULL, *str = NULL;
+	char **id = NULL, **str = NULL;
+	int idC = 0, strC = 0;
+	int i;
 
 	cout << endl << "info: this is compile mode. this will overwite if .dat file Exists." << endl << endl << "Do you want to continue? (y/n) :";
 
@@ -973,83 +1006,154 @@ bool CSD::compile(char * src, char *dst)
 	try {
 		txt = fopen(src, "rb");
 
-		if (!txt)
+		if (!txt) {
 			throw "No .txt file";
+		}
 
 		dat = fopen(dst, "wb+");
 
-		if (!dat)
+		if (!dat) {
 			throw "Cannot create .dat file";
+		}
 
-		if (formatNum == 0)
+		if (formatNum == 0) {
 			throw "Invaild sds file loaded";
+		}
 
-		id = new char[idSize];
-		str = new char[strSize];
-		id[0] = 0;
-		str[0] = 0;
+		if (idNum) {
+			id = new char*[idNum];
+		}
+		if (strNum) {
+			str = new char*[strNum];
+		}
+		
+		for (int i = 0; i < idNum; i++){
+			id[i] = new char[idSize];
+		}
+		for (int i = 0; i < strNum; i++){
+			str[i] = new char[strSize];
+		}
 
 		v = new int[vNum]();
 		
 		for (; !feof(txt);)
 		{
-			//cout << "v: ";
-			for (int i = 0; i < vNum; i++)
+			sel = fgetc(txt);
+			if (feof(txt))
 			{
-				if (fscanf(txt, "%d ", &v[i]) <= 0)
+				break;
+			}
+			else {
+				fseek(txt, -1, SEEK_CUR);
+			}
+
+			idC = 0;
+			strC = 0;
+			for (i = 0; i < idNum; i++) {
+				id[i][0] = 0;
+			}
+			for (i = 0; i < strNum; i++) {
+				str[i][0] = 0;
+			}
+			//cout << "v: ";
+			for (i = 0; i < vNum; i++)
+			{
+				if (fscanf(txt, "%d ", &v[i]) <= 0) {
 					throw "Invaild txt file";
+				}
 			//	cout << "[" << i << "]" << v[i];
 			}
 
-			for (int i = 0; i <= idSize; i++)
+			for (; idC < idNum && !feof(txt); ++idC)
 			{
-				id[i] = fgetc(txt);
-				if (i == idSize)
-					throw "No enough idSize";
-				if (id[i] == 0x0a)
+				for (i = 0; i < idSize && !feof(txt); i++)
 				{
-					id[i] = 0;
-					break;
+					if (i == idSize-1) {
+						throw "No enough idSize";
+					}
+					id[idC][i] = fgetc(txt);
+					if (id[idC][i] == 0x0a || id[idC][i]==0xffff) {
+						id[idC][i] = 0;
+						break;
+					}
 				}
 			}
 
-			for (int i = 0; !feof(txt); i++)
+			for (;strC < strNum; ++strC)
 			{
-				str[i] = fgetc(txt);
-				if (i >= strSize)
-					throw "No enough strSize";
-				if (str[i] == 0x0a)
+				for (i = 0; !feof(txt); i++)
 				{
-					if (fgetc(txt) == 0x0a)
+					if (i >= strSize) {
+						throw "No enough strSize";
+					}
+					str[strC][i] = fgetc(txt);
+					if (str[strC][i] == 0x0a)
 					{
-						tmp = fgetc(txt);
-						if (feof(txt))
+						if (fgetc(txt) == 0x0a)
 						{
-							str[i] = 0;
-							break;
-						}
-						if (tmp >= '0' && tmp <= '9')
-						{
+							tmp = fgetc(txt);
+							if (feof(txt)){
+								str[strC][i] = 0;
+								break;
+							}
+							else if (tmp >= '0' && tmp <= '9'){
+								fseek(txt, -1, SEEK_CUR);
+								str[strC][i] = 0;
+								break;
+							}
+							else if (tmp == '[' && strNum >1) {
+								if (fgetc(txt) == 's')
+								{
+									if (fgetc(txt) == 'T') {
+										if (fgetc(txt) == 'r') {
+											if (fgetc(txt) == ']') {
+												if (fgetc(txt) == 0x0a) {
+													str[strC][i] = 0;
+													break;
+												}
+												else {
+													fseek(txt, -1, SEEK_CUR);
+												}
+											}
+											else {
+												fseek(txt, -1, SEEK_CUR);
+											}
+										}
+										else {
+											fseek(txt, -1, SEEK_CUR);
+										}
+									}
+									else {
+										fseek(txt, -1, SEEK_CUR);
+									}
+								}
+								else {
+									fseek(txt, -1, SEEK_CUR);
+								}
+							}
 							fseek(txt, -1, SEEK_CUR);
-							str[i] = 0;
-							break;
 						}
 						fseek(txt, -1, SEEK_CUR);
 					}
-					fseek(txt, -1, SEEK_CUR);
 				}
 			}
+			idC = 0;
+			strC = 0;
 			
 			int vntmp;
 			
-			for (int i = 0; i < formatNum; i++)
+			for (i = 0; i < formatNum; i++)
 			{
 				if (!(format[i] & 0xff00))			// 그냥 평문
+				{
 					fputc(format[i], dat);
+				}
 				else if ((format[i] & 0xff00) == 0x0200)	// str dependence인 Hex
 				{
-					if(str[0]!=0)
+					if (str[strC][0] != 0)
+					{
 						fputc(format[i] & 0xff, dat);
+					}
 				}
 				else if ((format[i] & 0xff00) == 0x0100)	// 변수
 				{
@@ -1060,45 +1164,58 @@ bool CSD::compile(char * src, char *dst)
 						//cout << vNum << " " << vntmp << " " << format[i] << endl;
 						throw "Invaild sds : No var";
 					}
-					else if (vArr[vntmp]->getStrDep() && str[0]==0)		// 만약 str dependence인데 str이 없는 경우 
+					else if (vArr[vntmp]->getStrDep() && str[strC][0]==0)		// 만약 str dependence인데 str이 없는 경우 
 					{
 						continue;
 					}
 					else if (vArr[vntmp]->getEssen())		// 만약 essen일경우 
 					{
-						if (vArr[vntmp]->isVaild(v[vntmp]))
+						if (vArr[vntmp]->isVaild(v[vntmp])) {
 							fputc(v[vntmp], dat);
-						else
+						}
+						else {
 							throw "Invaild Var value";
+						}
 					}
 					else if (vArr[vntmp]->getDef() != v[vntmp])	// 만약 출력이 필요한 non-essen일경우 
 					{
 						//cout << vArr[vntmp]->name << vArr[vntmp]->getDef() << v[vntmp] << endl;
-						if (vArr[vntmp]->isVaild(v[vntmp]))
+						if (vArr[vntmp]->isVaild(v[vntmp])) {
 							fputc(v[vntmp], dat);
-						else
+						}
+						else {
 							throw "Invaild Var value";
+						}
 					}
-					else
+					else {
 						continue;
+					}
 				}
 				else if ((format[i] & 0xff00) == 0x0400) // id
 				{
 					for (int i = 0;; i++)
 					{
-						if (id[i] == 0)
+						if (id[idC][i] == 0){
 							break;
-						fputc(id[i], dat);
+						}
+						else{
+							fputc(id[idC][i], dat);
+						}
 					}
+					idC++;
 				}
 				else if ((format[i] & 0xff00) == 0x0800) // str
 				{
 					for (int i = 0;; i++)
 					{
-						if (str[i] == 0)
+						if (str[strC][i] == 0){
 							break;
-						fputc(str[i], dat);
+						}
+						else {
+							fputc(str[strC][i], dat);
+						}
 					}
+					strC++;
 				}
 				else
 				{
@@ -1111,25 +1228,29 @@ bool CSD::compile(char * src, char *dst)
 
 
 
-		delete id;
-		delete str;
+		if (idNum) {
+			delete[] id;
+		}
+		if (strNum) {
+			delete[] str;
+		}
 		delete v;
 		fclose(dat);
 		fclose(txt);
 	}
 	catch (char *s)
 	{
-		cout << "[ERR] " << s << endl;
+		cout << "[ERR] compile(): " << s << endl;
 		if (dat)
 			fclose(dat);
 		if (txt)
 			fclose(txt);
 		if (v)
 			delete v;
-		if (id)
-			delete id;
-		if (str)
-			delete str;
+		if (id && idNum)
+			delete []id;
+		if (str && strNum)
+			delete []str;
 		return false;
 	}
 	catch (...)

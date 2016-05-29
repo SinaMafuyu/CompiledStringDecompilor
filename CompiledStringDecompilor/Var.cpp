@@ -1,7 +1,8 @@
 #include "csd.h"
 
-Var::Var(char *name) {
-	this->name = new char[strlen(name) + 1];
+Var::Var(const char *name) {
+	this->nLen = strlen(name) + 1;
+	this->name = new char[nLen];
 	strcpy(this->name, name);
 	equalSize = 0;
 	equalNum = 0;
@@ -19,9 +20,14 @@ Var::~Var() {
 		delete equal;
 }
 
-char * Var::getName(void)
+void Var::getName(char *buf)
 {
-	return name;
+	strcpy(buf, name);
+}
+
+int Var::getNLen(void)
+{
+	return this->nLen;
 }
 
 void Var::setEssen(bool isEssen, int def) {

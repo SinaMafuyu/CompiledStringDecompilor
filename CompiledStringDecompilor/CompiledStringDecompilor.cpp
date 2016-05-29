@@ -20,6 +20,7 @@ int main(int argc, char* argv[])
 				csd.decompile(argv[3], argv[4], false);
 			}
 		}
+		getchar();
 	}
 	else if (argc == 5 && !strcmp(argv[1], "compile"))
 	{
@@ -27,6 +28,7 @@ int main(int argc, char* argv[])
 		if (csd.loadSds(argv[2])) {
 			csd.compile(argv[4], argv[3]);
 		}
+		getchar();
 	}
 	else
 	{
@@ -65,9 +67,4 @@ int toHex(int ch)
 	}
 	else
 		return -1;
-}
-
-int Hextoint(int hex)
-{
-
 }

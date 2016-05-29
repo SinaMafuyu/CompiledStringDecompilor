@@ -9,6 +9,7 @@ class Var {
 	friend class CSD;
 private:
 	char *name;
+	int nLen;
 	bool isEssen;
 	bool isStrDep;	//str dependence
 	int def;		// default val
@@ -23,9 +24,10 @@ private:
 	bool isSetted;	// if Condition has setted
 
 public:
-	Var(char *name);
+	Var(const char *name);
 	~Var();
-	char *getName(void);
+	void getName(char *buf);
+	int getNLen(void);
 	void setEssen(bool isEssen, int def);
 	bool getEssen(void);
 	void setStrDep(bool isStrDep);
@@ -48,26 +50,26 @@ private:
 	int vSize;		// total size
 	int vNum;		// number of elements
 	int idSize, strSize;	//for de/compile
+	int idNum, strNum;	//for de/compile
 	int loop;
 	int lastEssen;
 
-	Var *getVar(char *name);
-	int addVar(char *name);
+	int getVar(const char *name);
+	int addVar(const char *name);
 	void addFormat(int num);
 	void sortVar(void);
 	int nextEssen(int i);
 	int nextEssenI(int i);
 	bool isNextLine(FILE *fp);
-	bool isPatternMatch(FILE *fp, int i);
 	int nextHex(int i);
 	int nextHexI(int i);
 
 public:
 	CSD();
 	~CSD();
-	bool loadSds(char *fileName);
-	bool decompile(char * src, char * dst, bool tmplt);
-	bool compile(char * src, char *dst);
+	bool loadSds(const char *fileName);
+	bool decompile(const char * src, const char * dst, bool tmplt);
+	bool compile(const char * src, const char *dst);
 	void CSD::showSds();
 };
 
